@@ -1,0 +1,17 @@
+[Unit]
+Description=meWork360 Platform Farm Agent (outbound)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/mework360/platform-agent.env
+ExecStart=/usr/local/bin/mework360-platform-agent
+Restart=on-failure
+RestartSec=5
+User=root
+Group=root
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

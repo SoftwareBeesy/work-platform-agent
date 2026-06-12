@@ -1,0 +1,39 @@
+{
+  "projeto": "work-platform-agent",
+  "descricao": "Farm Agent daemon (Platform V2): outbound mTLS/token, long-poll comandos, eventos de progresso.",
+  "cenario": "IMPLEMENTACAO",
+  "perfil": null,
+  "fase_atual": "9",
+  "fase_nome": "Sprint N17 — Farm Agent scaffold (Fase 1a)",
+  "sprint_atual": "N17",
+  "checkpoint": {
+    "phase": "testing",
+    "validation_gate": {
+      "sprint": "N17",
+      "result": "PENDENTE"
+    }
+  },
+  "ultimo_update": "2026-06-12T16:35:00Z",
+  "modulos": [
+    {
+      "nome": "agent-transport",
+      "descricao": "mTLS client + GET commands + POST events",
+      "status": "concluido"
+    },
+    {
+      "nome": "agent-queue",
+      "descricao": "SQLite offline event queue",
+      "status": "concluido"
+    },
+    {
+      "nome": "agent-runner",
+      "descricao": "Daemon loop, ping handler, backoff",
+      "status": "concluido"
+    }
+  ],
+  "proximos_passos": [
+    "N18: AgentGateway em work-platform-api",
+    "N19: cutover SSH → agente (piloto)"
+  ],
+  "contexto_rapido": "N17 scaffold Go. Gate: systemd + outbound + ping. Sem portas inbound."
+}
