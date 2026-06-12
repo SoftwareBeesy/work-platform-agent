@@ -1,9 +1,6 @@
 package config
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 func TestLoadRequiresCoreEnv(t *testing.T) {
 	t.Parallel()
