@@ -7,12 +7,14 @@
   "fase_nome": "Sprint N17 — Farm Agent scaffold (Fase 1a)",
   "sprint_atual": "N17",
   "checkpoint": {
-    "phase": "testing",
+    "phase": "done",
     "validation_gate": {
       "sprint": "N17",
-      "result": "PENDENTE"
+      "result": "APROVADA",
+      "ci_url": "https://github.com/SoftwareBeesy/work-platform-agent/actions/runs/27429744923"
     }
   },
+  "sprint_atual": null,
   "ultimo_update": "2026-06-12T16:35:00Z",
   "modulos": [
     {
