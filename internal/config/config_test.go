@@ -3,8 +3,6 @@ package config
 import "testing"
 
 func TestLoadRequiresCoreEnv(t *testing.T) {
-	t.Parallel()
-
 	t.Setenv("FARM_ID", "")
 	t.Setenv("CONTROL_PLANE_URL", "")
 	t.Setenv("AGENT_TOKEN", "")
