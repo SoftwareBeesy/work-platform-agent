@@ -22,6 +22,7 @@ type Config struct {
 	HeartbeatEvery   time.Duration
 	InitialBackoff   time.Duration
 	MaxBackoff       time.Duration
+	ManageBinPath    string
 }
 
 // Load reads configuration from environment variables.
@@ -38,6 +39,11 @@ func Load() (Config, error) {
 		HeartbeatEvery:  durationEnv("AGENT_HEARTBEAT_SEC", 30*time.Second),
 		InitialBackoff:  durationEnv("AGENT_BACKOFF_INITIAL_SEC", 2*time.Second),
 		MaxBackoff:      durationEnv("AGENT_BACKOFF_MAX_SEC", 2*time.Minute),
+		ManageBinPath:   strings.TrimSpace(os.Getenv("NEXTCLOUD_MANAGE_PATH")),
+	}
+
+	if cfg.ManageBinPath == "" {
+		cfg.ManageBinPath = "/usr/local/bin/nextcloud-manage"
 	}
 
 	if cfg.FarmID == "" {

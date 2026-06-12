@@ -21,13 +21,14 @@ type CommandsResponse struct {
 
 // Event is progress or heartbeat emitted by the agent.
 type Event struct {
-	OperationID    string `json:"operation_id,omitempty"`
-	FarmID         string `json:"farm_id"`
-	State          string `json:"state"`
-	Step           string `json:"step,omitempty"`
-	Message        string `json:"message,omitempty"`
-	Percent        int    `json:"percent,omitempty"`
-	Timestamp      string `json:"ts"`
-	SchemaVersion  int    `json:"schema_version"`
-	EventType      string `json:"event_type,omitempty"`
+	OperationID   string         `json:"operation_id,omitempty"`
+	FarmID        string         `json:"farm_id"`
+	State         string         `json:"state"`
+	Step          string         `json:"step,omitempty"`
+	Message       string         `json:"message,omitempty"`
+	Percent       int            `json:"percent,omitempty"`
+	Timestamp     string         `json:"ts"`
+	SchemaVersion int            `json:"schema_version"`
+	EventType     string         `json:"event_type,omitempty"`
+	Data          map[string]any `json:"data,omitempty"`
 }

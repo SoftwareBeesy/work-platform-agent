@@ -9,6 +9,7 @@ import (
 
 	"github.com/SoftwareBeesy/work-platform-agent/internal/config"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/contract"
+	"github.com/SoftwareBeesy/work-platform-agent/internal/manage"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/queue"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/transport"
 )
@@ -32,6 +33,7 @@ type Runner struct {
 	cfg       config.Config
 	transport Transport
 	queue     EventStore
+	manage    manage.Invoker
 	logger    *slog.Logger
 	backoff   time.Duration
 }
@@ -45,6 +47,7 @@ func NewRunner(cfg config.Config, tp Transport, q EventStore, logger *slog.Logge
 		cfg:       cfg,
 		transport: tp,
 		queue:     q,
+		manage:    manage.NewAdapter(cfg.ManageBinPath),
 		logger:    logger,
 		backoff:   cfg.InitialBackoff,
 	}
@@ -112,6 +115,8 @@ func (r *Runner) handleCommand(ctx context.Context, cmd contract.Command) error 
 			EventType:     "progress",
 		}
 		return r.emitEvent(ctx, event)
+	case "tenant.create", "tenant.remove":
+		return r.handleManageOperation(ctx, cmd)
 	default:
 		event := contract.Event{
 			SchemaVersion: 1,
@@ -126,6 +131,97 @@ func (r *Runner) handleCommand(ctx context.Context, cmd contract.Command) error 
 		}
 		return r.emitEvent(ctx, event)
 	}
+}
+
+func (r *Runner) handleManageOperation(ctx context.Context, cmd contract.Command) error {
+	args, stdin, err := manageArgsFromPayload(cmd.Payload)
+	if err != nil {
+		return r.emitEvent(ctx, contract.Event{
+			SchemaVersion: 1,
+			OperationID:   cmd.OperationID,
+			FarmID:        r.cfg.FarmID,
+			State:         "failed",
+			Step:          "validate",
+			Message:       err.Error(),
+			Timestamp:     time.Now().UTC().Format(time.RFC3339),
+			EventType:     "progress",
+		})
+	}
+
+	parsed, err := r.manage.RunAsync(ctx, args, stdin)
+	if err != nil {
+		return r.emitEvent(ctx, contract.Event{
+			SchemaVersion: 1,
+			OperationID:   cmd.OperationID,
+			FarmID:        r.cfg.FarmID,
+			State:         "failed",
+			Step:          "manage_exec",
+			Message:       err.Error(),
+			Timestamp:     time.Now().UTC().Format(time.RFC3339),
+			EventType:     "progress",
+		})
+	}
+
+	jobID, err := manage.JobID(parsed)
+	if err != nil {
+		return r.emitEvent(ctx, contract.Event{
+			SchemaVersion: 1,
+			OperationID:   cmd.OperationID,
+			FarmID:        r.cfg.FarmID,
+			State:         "failed",
+			Step:          "parse_job_id",
+			Message:       err.Error(),
+			Timestamp:     time.Now().UTC().Format(time.RFC3339),
+			EventType:     "progress",
+		})
+	}
+
+	return r.emitEvent(ctx, contract.Event{
+		SchemaVersion: 1,
+		OperationID:   cmd.OperationID,
+		FarmID:        r.cfg.FarmID,
+		State:         "succeeded",
+		Step:          "dispatched",
+		Message:       "job queued on farm",
+		Percent:       100,
+		Timestamp:     time.Now().UTC().Format(time.RFC3339),
+		EventType:     "progress",
+		Data: map[string]any{
+			"job_id": jobID,
+		},
+	})
+}
+
+func manageArgsFromPayload(payload map[string]interface{}) ([]string, string, error) {
+	if payload == nil {
+		return nil, "", fmt.Errorf("payload is required")
+	}
+
+	rawArgs, ok := payload["args"].([]interface{})
+	if !ok || len(rawArgs) == 0 {
+		return nil, "", fmt.Errorf("payload.args is required")
+	}
+
+	args := make([]string, 0, len(rawArgs))
+	for _, item := range rawArgs {
+		s, ok := item.(string)
+		if !ok || s == "" {
+			return nil, "", fmt.Errorf("payload.args must be strings")
+		}
+		args = append(args, s)
+	}
+
+	stdin := ""
+	if raw, ok := payload["stdin_json"]; ok && raw != nil {
+		switch v := raw.(type) {
+		case string:
+			stdin = v
+		default:
+			return nil, "", fmt.Errorf("payload.stdin_json must be a string")
+		}
+	}
+
+	return args, stdin, nil
 }
 
 func (r *Runner) sendHeartbeat(ctx context.Context) error {
