@@ -10,6 +10,8 @@ import (
 	"github.com/SoftwareBeesy/work-platform-agent/internal/config"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/contract"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/manage"
+	"github.com/SoftwareBeesy/work-platform-agent/internal/occ"
+	"github.com/SoftwareBeesy/work-platform-agent/internal/ops"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/queue"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/transport"
 )
@@ -34,6 +36,7 @@ type Runner struct {
 	transport Transport
 	queue     EventStore
 	manage    manage.Invoker
+	occ       *occ.Adapter
 	logger    *slog.Logger
 	backoff   time.Duration
 }
@@ -43,11 +46,13 @@ func NewRunner(cfg config.Config, tp Transport, q EventStore, logger *slog.Logge
 	if logger == nil {
 		logger = slog.Default()
 	}
+	manageAdapter := manage.NewAdapter(cfg.ManageBinPath)
 	return &Runner{
 		cfg:       cfg,
 		transport: tp,
 		queue:     q,
-		manage:    manage.NewAdapter(cfg.ManageBinPath),
+		manage:    manageAdapter,
+		occ:       occ.NewAdapter(manageAdapter),
 		logger:    logger,
 		backoff:   cfg.InitialBackoff,
 	}
@@ -115,7 +120,11 @@ func (r *Runner) handleCommand(ctx context.Context, cmd contract.Command) error 
 			EventType:     "progress",
 		}
 		return r.emitEvent(ctx, event)
-	case "tenant.create", "tenant.remove":
+	case "tenant.create":
+		return ops.HandleTenantCreate(ctx, cmd, r.cfg.FarmID, r.manage, r.emitEvent)
+	case "memail.configure":
+		return ops.HandleMemailConfigure(ctx, cmd, r.cfg.FarmID, r.occ, r.emitEvent)
+	case "tenant.remove":
 		return r.handleManageOperation(ctx, cmd)
 	default:
 		event := contract.Event{
