@@ -10,6 +10,7 @@ import (
 	"github.com/SoftwareBeesy/work-platform-agent/internal/config"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/contract"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/manage"
+	"github.com/SoftwareBeesy/work-platform-agent/internal/ops"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/queue"
 	"github.com/SoftwareBeesy/work-platform-agent/internal/transport"
 )
@@ -117,6 +118,8 @@ func (r *Runner) handleCommand(ctx context.Context, cmd contract.Command) error 
 		return r.emitEvent(ctx, event)
 	case "tenant.create", "tenant.remove":
 		return r.handleManageOperation(ctx, cmd)
+	case "custom-apps.update":
+		return ops.HandleCustomAppsUpdate(ctx, cmd, r.cfg.FarmID, r.manage, r.emitEvent)
 	default:
 		event := contract.Event{
 			SchemaVersion: 1,
