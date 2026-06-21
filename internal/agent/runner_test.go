@@ -12,6 +12,22 @@ import (
 	"github.com/SoftwareBeesy/work-platform-agent/internal/queue"
 )
 
+type stubManageInvoker struct {
+	args   []string
+	stdin  string
+	result map[string]any
+	err    error
+}
+
+func (s *stubManageInvoker) RunAsync(ctx context.Context, args []string, stdin string) (map[string]any, error) {
+	s.args = append([]string(nil), args...)
+	s.stdin = stdin
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.result, nil
+}
+
 type fakeTransport struct {
 	mu       sync.Mutex
 	commands []contract.Command
@@ -151,5 +167,48 @@ func TestRunnerQueuesEventsWhenPostFails(t *testing.T) {
 	defer tp.mu.Unlock()
 	if len(tp.events) != 1 {
 		t.Fatalf("expected 1 delivered event, got %d", len(tp.events))
+	}
+}
+
+func TestRunnerRoutesCustomAppsUpdate(t *testing.T) {
+	t.Parallel()
+
+	manageStub := &stubManageInvoker{result: map[string]any{"job_id": "job-runner-ca-1"}}
+	tp := &fakeTransport{}
+	q := &memQueue{}
+	cfg := config.Config{
+		FarmID:         "farm-test",
+		PollTimeout:    time.Second,
+		HeartbeatEvery: time.Hour,
+		InitialBackoff: 10 * time.Millisecond,
+		MaxBackoff:     50 * time.Millisecond,
+	}
+
+	runner := NewRunner(cfg, tp, q, nil)
+	runner.manage = manageStub
+
+	cmd := contract.Command{
+		OperationID: "op-runner-ca",
+		Operation:   "custom-apps.update",
+		Payload: map[string]interface{}{
+			"ring": "canary",
+			"json": true,
+		},
+	}
+
+	if err := runner.handleCommand(context.Background(), cmd); err != nil {
+		t.Fatalf("handleCommand: %v", err)
+	}
+
+	tp.mu.Lock()
+	defer tp.mu.Unlock()
+
+	for _, ev := range tp.events {
+		if ev.Step == "unsupported" {
+			t.Fatalf("custom-apps.update must be routed to handler, got unsupported: %+v", ev)
+		}
+	}
+	if len(manageStub.args) < 3 {
+		t.Fatalf("expected manage invocation for custom-apps.update, args=%v", manageStub.args)
 	}
 }
