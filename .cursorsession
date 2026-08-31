@@ -14,7 +14,7 @@
       "ci_url": "https://github.com/SoftwareBeesy/work-platform-agent/actions/runs/27429744923"
     }
   },
-  "ultimo_update": "2026-08-26T18:24:39Z",
+  "ultimo_update": "2026-08-31T02:26:25Z",
   "modulos": [
     {
       "nome": "agent-transport",
@@ -36,7 +36,7 @@
     "N18: AgentGateway em work-platform-api",
     "N19: cutover SSH → agente (piloto)"
   ],
-  "contexto_rapido": "N17 scaffold Go. Gate: systemd + outbound + ping. Sem portas inbound. Upgrade F152 batch: framework 4.57.8, decisions through #252. Upgrade batch 2026-08-26: framework 4.60.1, decisions through #263.",
-  "beesy_version": "4.60.1",
-  "decisions_applied_until": 263
+  "contexto_rapido": "N17 scaffold Go. Gate: systemd + outbound + ping. Sem portas inbound. Upgrade F152 batch: framework 4.57.8, decisions through #252. Upgrade batch 2026-08-26: framework 4.60.1, decisions through #263. | upgrade v4.66.0 batch (2026-08-31); decisions→273",
+  "beesy_version": "4.66.0",
+  "decisions_applied_until": 273
 }
