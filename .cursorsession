@@ -39,5 +39,6 @@
   "contexto_rapido": "N17 scaffold Go. Gate: systemd + outbound + ping. Sem portas inbound. Upgrade F152 batch: framework 4.57.8, decisions through #252. Upgrade batch 2026-08-26: framework 4.60.1, decisions through #263. | upgrade v4.66.0 batch (2026-08-31); decisions→273 Upgrade v4.68.5 (#274-#279) em 2026-09-01. Upgrade v4.69.0 (#267 (secrets)) em 2026-09-01.",
   "beesy_version": "4.69.0",
   "decisions_applied_until": 279,
-  "ambiente": "DESENVOLVIMENTO"
+  "ambiente": "DESENVOLVIMENTO",
+  "suite_anchor": "../mework360-suite"
 }
