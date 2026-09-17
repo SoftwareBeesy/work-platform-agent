@@ -37,5 +37,5 @@
     "N19: cutover SSH → agente (piloto)"
   ],
   "contexto_rapido": "N17 scaffold Go. Gate: systemd + outbound + ping. Sem portas inbound.",
-  "beesy_version": "4.73.3"
+  "beesy_version": "4.77.3"
 }
