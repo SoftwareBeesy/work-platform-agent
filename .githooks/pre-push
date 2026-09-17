@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -e
+# beesy-sprint-gate — appended by install-githooks.sh; do not remove marker line
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY GIT_PREFIX 2>/dev/null || true
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+GATE=""
+if [ -f "${REPO_ROOT}/scripts/git-hook-sprint-gate.py" ]; then
+  GATE="${REPO_ROOT}/scripts/git-hook-sprint-gate.py"
+elif [ -f "${HOME}/.cursor/scripts/git-hook-sprint-gate.py" ]; then
+  GATE="${HOME}/.cursor/scripts/git-hook-sprint-gate.py"
+fi
+if [ -z "$GATE" ]; then
+  exit 0
+fi
+_OVERRIDE_GUARD="${REPO_ROOT}/hooks/lib/beesy-override-guard.sh"
+if [ -f "${_OVERRIDE_GUARD}" ]; then
+  # shellcheck source=hooks/lib/beesy-override-guard.sh
+  source "${_OVERRIDE_GUARD}"
+  beesy_check_all_bypasses "${REPO_ROOT}" || exit 1
+fi
+_CHECKER=""
+if [ -f "${REPO_ROOT}/scripts/beesy-override-check.py" ]; then
+  _CHECKER="${REPO_ROOT}/scripts/beesy-override-check.py"
+elif [ -f "${HOME}/.cursor/scripts/beesy-override-check.py" ]; then
+  _CHECKER="${HOME}/.cursor/scripts/beesy-override-check.py"
+fi
+if [ "${BEESY_CONTRACT_DISABLE:-}" = "1" ]; then
+  if [ -z "$_CHECKER" ]; then
+    echo "[beesy-sprint-gate] DENY: BEESY_CONTRACT_DISABLE requires beesy-override-check.py (F199/ISS-102)" >&2
+    exit 1
+  fi
+  python3 "$_CHECKER" --repo "${REPO_ROOT}" --env-var BEESY_CONTRACT_DISABLE || exit 1
+  exit 0
+fi
+BEESY_PUSH_REFS=$(cat)
+python3 "$GATE" --repo "$REPO_ROOT" --push-refs "${BEESY_PUSH_REFS}" || exit 1

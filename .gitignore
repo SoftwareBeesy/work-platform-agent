@@ -6,3 +6,8 @@
 /.vscode/
 *.db
 *.db-journal
+
+# beesy session artifacts
+.cursorsession.lock
+.cursorsession.bak*
+.beesy/runs/
